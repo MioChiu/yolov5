@@ -22,6 +22,7 @@ from tqdm import tqdm
 
 from utils.general import xyxy2xywh, xywh2xyxy, clean_str
 from utils.torch_utils import torch_distributed_zero_first
+from utils.process_test_tile_data import get_patch_images
 
 # Parameters
 help_url = 'https://github.com/ultralytics/yolov5/wiki/Train-Custom-Data'
@@ -75,12 +76,20 @@ def create_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=Fa
     sampler = torch.utils.data.distributed.DistributedSampler(dataset) if rank != -1 else None
     loader = torch.utils.data.DataLoader if image_weights else InfiniteDataLoader
     # Use torch.utils.data.DataLoader() if dataset.properties will update during training else InfiniteDataLoader()
-    dataloader = loader(dataset,
-                        batch_size=batch_size,
-                        num_workers=nw,
-                        sampler=sampler,
-                        pin_memory=True,
-                        collate_fn=LoadImagesAndLabels.collate_fn4 if quad else LoadImagesAndLabels.collate_fn)
+    if rank != -1:
+        dataloader = loader(dataset,
+                            batch_size=batch_size,
+                            num_workers=nw,
+                            sampler=sampler,
+                            pin_memory=True,
+                            collate_fn=LoadImagesAndLabels.collate_fn4 if quad else LoadImagesAndLabels.collate_fn)
+    else:
+        dataloader = loader(dataset,
+                            batch_size=batch_size,
+                            num_workers=nw,
+                            shuffle=True,
+                            pin_memory=True,
+                            collate_fn=LoadImagesAndLabels.collate_fn4 if quad else LoadImagesAndLabels.collate_fn)
     return dataloader, dataset
 
 
@@ -193,6 +202,64 @@ class LoadImages:  # for inference
         self.frame = 0
         self.cap = cv2.VideoCapture(path)
         self.nframes = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    def __len__(self):
+        return self.nf  # number of files
+
+
+class LoadTileImages:  # for inference
+    def __init__(self, path, img_size=640, patch_size=(1024, 1024)):
+        p = str(Path(path))  # os-agnostic
+        p = os.path.abspath(p)  # absolute path
+        if '*' in p:
+            files = sorted(glob.glob(p, recursive=True))  # glob
+        elif os.path.isdir(p):
+            files = sorted(glob.glob(os.path.join(p, '*.*')))  # dir
+        elif os.path.isfile(p):
+            files = [p]  # files
+        else:
+            raise Exception('ERROR: %s does not exist' % p)
+
+        images = [x for x in files if x.split('.')[-1].lower() in img_formats]
+        ni = len(images)
+
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.files = images
+        self.nf = ni
+        self.mode = 'image'
+
+        assert self.nf > 0, 'No images found in %s. Supported formats are:\nimages: %s\n' % \
+                            (p, img_formats)
+
+    def __iter__(self):
+        self.count = 0
+        return self
+
+    def __next__(self):
+        if self.count == self.nf:
+            raise StopIteration
+        path = self.files[self.count]
+
+        # Read image
+        self.count += 1
+        img0 = cv2.imread(path)  # BGR
+        # img0 = Image.open(path)
+        # img0 = cv2.cvtColor(np.asarray(img0), cv2.COLOR_RGB2BGR)
+        assert img0 is not None, 'Image Not Found ' + path
+        print('image %g/%g %s: ' % (self.count, self.nf, path), end='')
+
+        # get patch
+        patch_images, patch_borders = get_patch_images(img0, height=self.patch_size[0], width=self.patch_size[1], overlap=0.05)
+
+        # Padded resize
+        for i in range(len(patch_images)):
+            patch_images[i] = letterbox(patch_images[i], new_shape=self.img_size)[0]
+        # Convert
+            patch_images[i] = patch_images[i][:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+            patch_images[i] = np.ascontiguousarray(patch_images[i])
+
+        return path, patch_images, img0, patch_borders
 
     def __len__(self):
         return self.nf  # number of files

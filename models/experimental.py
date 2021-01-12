@@ -95,6 +95,29 @@ class MixConv2d(nn.Module):
         return x + self.act(self.bn(torch.cat([m(x) for m in self.m], 1)))
 
 
+class SELayer(nn.Module):
+    def __init__(self, channels, reduction=16):
+        super(SELayer, self).__init__()
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.fc_1 = nn.Conv2d(
+            channels, channels // reduction, kernel_size=1, padding=0
+        )
+        self.relu = nn.ReLU(inplace=True)
+        self.fc_2 = nn.Conv2d(
+            channels // reduction, channels, kernel_size=1, padding=0
+        )
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        original = x
+        x = self.avg_pool(x)
+        x = self.fc_1(x)
+        x = self.relu(x)
+        x = self.fc_2(x)
+        x = self.sigmoid(x)
+        return original * x
+
+
 class Ensemble(nn.ModuleList):
     # Ensemble of models
     def __init__(self):
