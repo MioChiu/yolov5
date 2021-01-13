@@ -142,7 +142,7 @@ def detect(save_img=False):
                     "score": np.float64(conf)
                 }
                 results_json.append(results_dict)
-        cv2.imwrite(save_path, im0)
+        # cv2.imwrite(save_path, im0)
     if save_json:
         with open(json_path, 'w') as f:
             json.dump(results_json, f)
@@ -155,12 +155,12 @@ def detect(save_img=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/yolov5_old/best170.pt', help='model.pt path(s)')
+    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/yolov5/best135.pt', help='model.pt path(s)')
     parser.add_argument('--source', type=str, default='/mnt/qiuzheng/data/tile/images/test/', help='source')  # file/folder, 0 for webcam
-    parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
-    parser.add_argument('--patch-size', nargs='+', type=int, default=[640, 640], help='[train, test] image sizes')
-    parser.add_argument('--conf-thres', type=float, default=0.02, help='object confidence threshold')
-    parser.add_argument('--iou-thres', type=float, default=0.1, help='IOU threshold for NMS')
+    parser.add_argument('--img-size', type=int, default=832, help='inference size (pixels)')
+    parser.add_argument('--patch-size', nargs='+', type=int, default=[832, 832], help='[train, test] image sizes')
+    parser.add_argument('--conf-thres', type=float, default=0.01, help='object confidence threshold')
+    parser.add_argument('--iou-thres', type=float, default=0.3, help='IOU threshold for NMS')
     parser.add_argument('--device', default='0', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--view-img', action='store_true', help='display results')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     # parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument('--project', default='runs/detect', help='save results to project/name')
-    parser.add_argument('--name', default='5x_bce_e300_test', help='save results to project/name')
+    parser.add_argument('--name', default='5x_bce_e300_832_135_test', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     print(opt)
