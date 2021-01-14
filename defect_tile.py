@@ -18,7 +18,7 @@ from utils.general import check_img_size, non_max_suppression, apply_classifier,
 from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized
 from utils.process_test_tile_data import merge_sub_det
-
+from utils.post_process import get_tile_edge
 
 def detect(save_img=False):
     source, weights, view_img, save_txt, imgsz = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
@@ -121,11 +121,8 @@ def detect(save_img=False):
         print(f'Done. ({t2 - t1:.3f}s)')
 
         # discard background
-        discard_list = [(800, 150, 7200, 5850), (250, 150, 3850, 3350)]
-        if im0s.shape[:2] == (6000, 8192):
-            discard = discard_list[0]
-        elif im0s.shape[:2] == (3500, 4096):
-            discard = discard_list[1]
+        ex1, ey1, ex2, ey2 = get_tile_edge(im0)
+        discard = (ex1, ey1, ex2, ey2)
         if save_img or view_img:  # Add bbox to image
             for i in range(len(boxes)):
                 xyxy = boxes[i]
@@ -134,7 +131,7 @@ def detect(save_img=False):
                 conf = scores[i]
                 cls_ = classes[i]
                 label = f'{names[int(cls_)]} {conf:.2f}'
-                plot_one_box(xyxy, im0, label=label, color=colors[int(cls_)], line_thickness=3)
+                # plot_one_box(xyxy, im0, label=label, color=colors[int(cls_)], line_thickness=3)
                 results_dict = {
                     "name": p.name,
                     "category": int(cls_) + 1,
@@ -155,7 +152,7 @@ def detect(save_img=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/yolov5/best135.pt', help='model.pt path(s)')
+    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/yolov5/best.pt', help='model.pt path(s)')
     parser.add_argument('--source', type=str, default='/mnt/qiuzheng/data/tile/images/test/', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--img-size', type=int, default=832, help='inference size (pixels)')
     parser.add_argument('--patch-size', nargs='+', type=int, default=[832, 832], help='[train, test] image sizes')
@@ -172,7 +169,7 @@ if __name__ == '__main__':
     # parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument('--project', default='runs/detect', help='save results to project/name')
-    parser.add_argument('--name', default='5x_bce_e300_832_135_test', help='save results to project/name')
+    parser.add_argument('--name', default='5x_bce_e300_832_best_test', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     print(opt)
