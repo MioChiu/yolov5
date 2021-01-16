@@ -200,6 +200,9 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
     na = (len(anchors[0]) // 2) if isinstance(anchors, list) else anchors  # number of anchors
     no = na * (nc + 5)  # number of outputs = anchors * (classes + 5)
 
+    # import DCN
+    from models.DCNv2.DCN.dcn_v2 import DCN
+
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     for i, (f, n, m, args) in enumerate(d['backbone'] + d['head']):  # from, number, module, args
         m = eval(m) if isinstance(m, str) else m  # eval strings
@@ -210,7 +213,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
                 pass
 
         n = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in [Conv, Bottleneck, SPP, DWConv, MixConv2d, Focus, CrossConv, BottleneckCSP, C3]:
+        if m in [Conv, Bottleneck, SPP, DWConv, MixConv2d, Focus, CrossConv, BottleneckCSP, C3, DCN]:
             c1, c2 = ch[f], args[0]
 
             # Normal
@@ -248,8 +251,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
         elif m is Expand:
             c2 = ch[f if f < 0 else f + 1] // args[0] ** 2
         elif m is SELayer:
-            channel, re = args[0], args[1]
-            channel = make_divisible(channel * gw, 8) if channel != no else channel
+            channel, re = ch[f], args[0]
             args = [channel, re]
         else:
             c2 = ch[f if f < 0 else f + 1]

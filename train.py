@@ -290,6 +290,7 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
                     imgs = F.interpolate(imgs, size=ns, mode='bilinear', align_corners=False)
 
             # Forward
+            # DCN不支持混合精度=-=
             with amp.autocast(enabled=cuda):
                 pred = model(imgs)  # forward
                 loss, loss_items = compute_loss(pred, targets.to(device), model)  # loss scaled by batch_size
@@ -297,6 +298,13 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
                     loss *= opt.world_size  # gradient averaged between devices in DDP mode
                 if opt.quad:
                     loss *= 4.
+
+            # pred = model(imgs)  # forward
+            # loss, loss_items = compute_loss(pred, targets.to(device), model)  # loss scaled by batch_size
+            # if rank != -1:
+            #     loss *= opt.world_size  # gradient averaged between devices in DDP mode
+            # if opt.quad:
+            #     loss *= 4.
 
             # Backward
             scaler.scale(loss).backward()
