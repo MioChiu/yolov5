@@ -169,7 +169,7 @@ if __name__ == '__main__':
     # parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument('--project', default='runs/detect', help='save results to project/name')
-    parser.add_argument('--name', default='5x_bce_e300_832_new_74_test', help='save results to project/name')
+    parser.add_argument('--name', default='5x_bce_e300_832_38_test', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     print(opt)
