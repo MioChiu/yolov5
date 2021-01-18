@@ -75,7 +75,7 @@ def detect(save_img=False):
         pred = model(img, augment=opt.augment)[0]
 
         # Apply NMS
-        pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms)
+        pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms, softnms=True)
         t2 = time_synchronized()
 
         # Apply Classifier
@@ -136,22 +136,22 @@ def detect(save_img=False):
             if view_img:
                 cv2.imshow(str(p), im0)
 
-            # Save results (image with detections)
-            if save_img:
-                if dataset.mode == 'image':
-                    cv2.imwrite(save_path, im0)
-                else:  # 'video'
-                    if vid_path != save_path:  # new video
-                        vid_path = save_path
-                        if isinstance(vid_writer, cv2.VideoWriter):
-                            vid_writer.release()  # release previous video writer
+            # # Save results (image with detections)
+            # if save_img:
+            #     if dataset.mode == 'image':
+            #         cv2.imwrite(save_path, im0)
+            #     else:  # 'video'
+            #         if vid_path != save_path:  # new video
+            #             vid_path = save_path
+            #             if isinstance(vid_writer, cv2.VideoWriter):
+            #                 vid_writer.release()  # release previous video writer
 
-                        fourcc = 'mp4v'  # output video codec
-                        fps = vid_cap.get(cv2.CAP_PROP_FPS)
-                        w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-                        h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-                        vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (w, h))
-                    vid_writer.write(im0)
+            #             fourcc = 'mp4v'  # output video codec
+            #             fps = vid_cap.get(cv2.CAP_PROP_FPS)
+            #             w = int(vid_cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+            #             h = int(vid_cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+            #             vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*fourcc), fps, (w, h))
+            #         vid_writer.write(im0)
 
     if save_txt or save_img:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
@@ -166,7 +166,7 @@ def detect(save_img=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/yolov5/best135.pt', help='model.pt path(s)')
+    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/exp_yolov5/yolov5/runs/train/5x_e300_832/weights/best38.pt', help='model.pt path(s)')
     parser.add_argument('--source', type=str, default='/mnt/qiuzheng/data/tile/images/test/', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.01, help='object confidence threshold')
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     # parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument('--project', default='runs/detect', help='save results to project/name')
-    parser.add_argument('--name', default='5x_bce_whole_135_832', help='save results to project/name')
+    parser.add_argument('--name', default='5x_bce_e300_whole_38_832_softnms', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     print(opt)
