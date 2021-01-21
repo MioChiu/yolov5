@@ -25,7 +25,7 @@ import test  # import test.py to get mAP after each epoch
 from models.experimental import attempt_load
 from models.yolo import Model
 from utils.autoanchor import check_anchors
-from utils.datasets import create_dataloader
+from utils.datasets import create_dataloader, create_test_dataloader
 from utils.general import labels_to_class_weights, increment_path, labels_to_image_weights, init_seeds, \
     fitness, strip_optimizer, get_latest_run, check_dataset, check_file, check_git_status, check_img_size, \
     check_requirements, print_mutation, set_logging, one_cycle, colorstr
@@ -197,7 +197,10 @@ def train(hyp, opt, device, tb_writer=None, wandb=None):
     # Process 0
     if rank in [-1, 0]:
         ema.updates = start_epoch * nb // accumulate  # set EMA updates
-        testloader = create_dataloader(test_path, imgsz_test, total_batch_size, gs, opt,  # testloader
+        # testloader = create_test_dataloader(test_path, imgsz_test, total_batch_size, gs, opt,  # testloader
+        #                                hyp=hyp, cache=opt.cache_images and not opt.notest, rect=True,
+        #                                rank=-1, world_size=opt.world_size, workers=opt.workers, pad=0.5)[0]
+        testloader = create_test_dataloader(test_path, imgsz_test, 1, gs, opt,  # testloader
                                        hyp=hyp, cache=opt.cache_images and not opt.notest, rect=True,
                                        rank=-1, world_size=opt.world_size, workers=opt.workers, pad=0.5)[0]
 

@@ -10,7 +10,7 @@ import yaml
 from tqdm import tqdm
 
 from models.experimental import attempt_load
-from utils.datasets import create_dataloader
+from utils.datasets import create_dataloader, create_test_dataloader
 from utils.general import coco80_to_coco91_class, check_dataset, check_file, check_img_size, check_requirements, \
     box_iou, non_max_suppression, scale_coords, xyxy2xywh, xywh2xyxy, set_logging, increment_path
 from utils.loss import compute_loss
@@ -86,7 +86,7 @@ def test(data,
         img = torch.zeros((1, 3, imgsz, imgsz), device=device)  # init img
         _ = model(img.half() if half else img) if device.type != 'cpu' else None  # run once
         path = data['test'] if opt.task == 'test' else data['val']  # path to val/test images
-        dataloader = create_dataloader(path, imgsz, batch_size, model.stride.max(), opt, pad=0.5, rect=True)[0]
+        dataloader = create_test_dataloader(path, imgsz, 1, model.stride.max(), opt, pad=0.5, rect=True)[0]
 
     seen = 0
     confusion_matrix = ConfusionMatrix(nc=nc)
@@ -280,17 +280,19 @@ def test(data,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='test.py')
-    parser.add_argument('--weights', nargs='+', type=str, default='yolov5s.pt', help='model.pt path(s)')
-    parser.add_argument('--data', type=str, default='data/coco128.yaml', help='*.data path')
-    parser.add_argument('--batch-size', type=int, default=32, help='size of each image batch')
+    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/exp_yolov5/yolov5/runs/train/5x_lrf05_box025_e150_832_whole/weights/best40.pt', help='model.pt path(s)')
+    parser.add_argument('--data', type=str, default='data/tile.yaml', help='*.data path')
+    parser.add_argument('--batch-size', type=int, default=1, help='size of each image batch')
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
-    parser.add_argument('--conf-thres', type=float, default=0.001, help='object confidence threshold')
-    parser.add_argument('--iou-thres', type=float, default=0.6, help='IOU threshold for NMS')
+    parser.add_argument('--conf-thres', type=float, default=0.01, help='object confidence threshold')
+    parser.add_argument('--iou-thres', type=float, default=0.3, help='IOU threshold for NMS')
     parser.add_argument('--task', default='val', help="'val', 'test', 'study'")
-    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
+    parser.add_argument('--device', default='1', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--single-cls', action='store_true', help='treat as single-class dataset')
-    parser.add_argument('--augment', action='store_true', help='augmented inference')
-    parser.add_argument('--verbose', action='store_true', help='report mAP by class')
+    parser.add_argument('--augment', default=False, help='augmented inference')
+    # parser.add_argument('--augment', action='store_true', help='augmented inference')
+    parser.add_argument('--verbose', default=True, help='report mAP by class')
+    # parser.add_argument('--verbose', action='store_true', help='report mAP by class')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
     parser.add_argument('--save-hybrid', action='store_true', help='save label+prediction hybrid results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')

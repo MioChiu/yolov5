@@ -166,7 +166,7 @@ def detect(save_img=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/exp_yolov5/yolov5/runs/train/5x_e300_832/weights/best38.pt', help='model.pt path(s)')
+    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/exp_yolov5/yolov5/runs/train/5x_lrf05_box025_e150_832_whole/weights/best40.pt', help='model.pt path(s)')
     parser.add_argument('--source', type=str, default='/mnt/qiuzheng/data/tile/images/test/', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.01, help='object confidence threshold')
@@ -177,11 +177,11 @@ if __name__ == '__main__':
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
     parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --class 0, or --class 0 2 3')
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
-    parser.add_argument('--augment', default=True, help='augmented inference')
+    parser.add_argument('--augment', default=False, help='augmented inference')
     # parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument('--project', default='runs/detect', help='save results to project/name')
-    parser.add_argument('--name', default='5x_bce_e300_whole_38_832_softnms', help='save results to project/name')
+    parser.add_argument('--name', default='5x_e300_832_40_notta_merge', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     print(opt)

@@ -3,7 +3,7 @@ import cv2
 import torch
 import json
 import numpy as np
-
+from ensemble_boxes import *
 
 def get_tile_edge(image):
     img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) 
@@ -101,3 +101,14 @@ def box_iou(box1, box2):
     # inter(N,M) = (rb(N,M,2) - lt(N,M,2)).clamp(0).prod(2)
     inter = (torch.min(box1[:, None, 2:], box2[:, 2:]) - torch.max(box1[:, None, :2], box2[:, :2])).clamp(0).prod(2)
     return inter / (area1[:, None] + area2 - inter)  # iou = inter / (area1 + area2 - inter)
+
+
+def run_wbf(boxes, scores, image_size=1023, iou_thr=0.5, skip_box_thr=0.7, weights=None):
+    #boxes = [prediction[image_index]['boxes'].data.cpu().numpy()/(image_size-1) for prediction in predictions]
+    #scores = [prediction[image_index]['scores'].data.cpu().numpy() for prediction in predictions]
+    labels = [np.zeros(score.shape[0]) for score in scores]
+    boxes = [box/(image_size) for box in boxes]
+    boxes, scores, labels = weighted_boxes_fusion(boxes, scores, labels, weights=None, iou_thr=iou_thr, skip_box_thr=skip_box_thr)
+    #boxes, scores, labels = nms(boxes, scores, labels, weights=[1,1,1,1,1], iou_thr=0.5)
+    boxes = boxes*(image_size)
+    return boxes, scores, labels
