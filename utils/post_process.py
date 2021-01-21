@@ -103,12 +103,19 @@ def box_iou(box1, box2):
     return inter / (area1[:, None] + area2 - inter)  # iou = inter / (area1 + area2 - inter)
 
 
-def run_wbf(boxes, scores, image_size=1023, iou_thr=0.5, skip_box_thr=0.7, weights=None):
+def run_wbf(boxes, scores, labels, image_size, iou_thr=0.3, skip_box_thr=0.01, weights=None):
     #boxes = [prediction[image_index]['boxes'].data.cpu().numpy()/(image_size-1) for prediction in predictions]
     #scores = [prediction[image_index]['scores'].data.cpu().numpy() for prediction in predictions]
-    labels = [np.zeros(score.shape[0]) for score in scores]
+    # labels = [np.zeros(score.shape[0]) for score in scores]
+    image_size = np.array([image_size[1], image_size[0], image_size[1], image_size[0]])
     boxes = [box/(image_size) for box in boxes]
     boxes, scores, labels = weighted_boxes_fusion(boxes, scores, labels, weights=None, iou_thr=iou_thr, skip_box_thr=skip_box_thr)
     #boxes, scores, labels = nms(boxes, scores, labels, weights=[1,1,1,1,1], iou_thr=0.5)
     boxes = boxes*(image_size)
+    # mask = scores > 0.05
+    # boxes = boxes[mask]
+    # scores = scores[mask]
+    # labels = labels[mask]
+    scores = scores[:, np.newaxis]
+    labels = labels[:, np.newaxis]
     return boxes, scores, labels

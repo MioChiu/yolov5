@@ -98,11 +98,11 @@ class Model(nn.Module):
         self.info()
         logger.info('')
 
-    def forward(self, x, augment=False, profile=False):
+    def forward(self, x, augment=False, profile=False, wbf=False):
         if augment:
             img_size = x.shape[-2:]  # height, width
-            s = [1, 0.83, 0.67]  # scales
-            f = [None, 3, None]  # flips (2-ud, 3-lr)
+            s = [1, 1.2, 0.83]  # scales
+            f = [None, 3, 2]  # flips (2-ud, 3-lr)
             y = []  # outputs
             for si, fi in zip(s, f):
                 xi = scale_img(x.flip(fi) if fi else x, si, gs=int(self.stride.max()))
@@ -114,7 +114,10 @@ class Model(nn.Module):
                 elif fi == 3:
                     yi[..., 0] = img_size[1] - yi[..., 0]  # de-flip lr
                 y.append(yi)
-            return torch.cat(y, 1), None  # augmented inference, train
+            if not wbf:
+                return torch.cat(y, 1), None  # augmented inference, train
+            else:
+                return y, None  # augmented inference, train
         else:
             return self.forward_once(x, profile)  # single-scale inference, train
 

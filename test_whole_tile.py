@@ -17,7 +17,7 @@ from utils.loss import compute_loss
 from utils.metrics import ap_per_class, ConfusionMatrix
 from utils.plots import plot_images, output_to_target, plot_study_txt
 from utils.torch_utils import select_device, time_synchronized
-
+from utils.post_process import run_wbf
 
 def test(data,
          weights=None,
@@ -35,6 +35,7 @@ def test(data,
          save_txt=False,  # for auto-labelling
          save_hybrid=False,  # for hybrid auto-labelling
          save_conf=False,  # save auto-label confidences
+         wbf=False,
          plots=True,
          log_imgs=0):  # number of logged images
 
@@ -106,7 +107,7 @@ def test(data,
         with torch.no_grad():
             # Run model
             t = time_synchronized()
-            inf_out, train_out = model(img, augment=augment)  # inference and training outputs
+            inf_out, train_out = model(img, augment=augment, wbf=wbf)  # inference and training outputs
             t0 += time_synchronized() - t
 
             # Compute loss
@@ -117,7 +118,21 @@ def test(data,
             targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
             lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
             t = time_synchronized()
-            output = non_max_suppression(inf_out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb)
+            if augment and wbf:
+                boxes_list = []
+                scores_list = []
+                labels_list = []
+                for predi in inf_out:
+                    predi = non_max_suppression(predi, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb)
+                    # predi = scale_coords(img.shape[2:], predi[:, :4], im0.shape).round()
+                    boxes_list.append(predi[0][:, :4].cpu().numpy())
+                    scores_list.append(predi[0][:, 4].cpu().numpy())
+                    labels_list.append(predi[0][:, 5].cpu().numpy())
+                boxes, scores, labels = run_wbf(boxes_list, scores_list, labels_list, img.shape[2:])
+                output = [torch.from_numpy(np.concatenate([boxes, scores, labels], -1)).cuda()]
+            else:
+                output = non_max_suppression(inf_out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb)
+
             t1 += time_synchronized() - t
 
         # Statistics per image
@@ -289,7 +304,8 @@ if __name__ == '__main__':
     parser.add_argument('--task', default='val', help="'val', 'test', 'study'")
     parser.add_argument('--device', default='1', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--single-cls', action='store_true', help='treat as single-class dataset')
-    parser.add_argument('--augment', default=False, help='augmented inference')
+    parser.add_argument('--augment', default=True, help='augmented inference')
+    parser.add_argument('--wbf', default=True, help='use wbf')
     # parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--verbose', default=True, help='report mAP by class')
     # parser.add_argument('--verbose', action='store_true', help='report mAP by class')
@@ -320,6 +336,7 @@ if __name__ == '__main__':
              save_txt=opt.save_txt | opt.save_hybrid,
              save_hybrid=opt.save_hybrid,
              save_conf=opt.save_conf,
+             wbf=opt.wbf
              )
 
     elif opt.task == 'study':  # run over a range of settings and save/plot

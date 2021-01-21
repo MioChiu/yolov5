@@ -15,7 +15,7 @@ from utils.general import check_img_size, check_requirements, non_max_suppressio
     xyxy2xywh, strip_optimizer, set_logging, increment_path
 from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized
-from utils.post_process import get_tile_edge
+from utils.post_process import get_tile_edge, run_wbf
 
 def detect(save_img=False):
     source, weights, view_img, save_txt, imgsz = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size
@@ -72,10 +72,23 @@ def detect(save_img=False):
 
         # Inference
         t1 = time_synchronized()
-        pred = model(img, augment=opt.augment)[0]
+        pred = model(img, augment=opt.augment, wbf=opt.wbf)[0]
 
         # Apply NMS
-        pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms, softnms=False)
+        if opt.augment and opt.wbf:
+            boxes_list = []
+            scores_list = []
+            labels_list = []
+            for predi in pred:
+                predi = non_max_suppression(predi, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms, softnms=False)
+                # predi = scale_coords(img.shape[2:], predi[:, :4], im0.shape).round()
+                boxes_list.append(predi[0][:, :4].cpu().numpy())
+                scores_list.append(predi[0][:, 4].cpu().numpy())
+                labels_list.append(predi[0][:, 5].cpu().numpy())
+            boxes, scores, labels = run_wbf(boxes_list, scores_list, labels_list, img.shape[2:])
+            pred = [torch.from_numpy(np.concatenate([boxes, scores, labels], -1))]           
+        else:
+            pred = non_max_suppression(pred, opt.conf_thres, opt.iou_thres, classes=opt.classes, agnostic=opt.agnostic_nms, softnms=False)
         t2 = time_synchronized()
 
         # Apply Classifier
@@ -170,18 +183,19 @@ if __name__ == '__main__':
     parser.add_argument('--source', type=str, default='/mnt/qiuzheng/data/tile/images/test/', help='source')  # file/folder, 0 for webcam
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.01, help='object confidence threshold')
-    parser.add_argument('--iou-thres', type=float, default=0.3, help='IOU threshold for NMS')
+    parser.add_argument('--iou-thres', type=float, default=0.1, help='IOU threshold for NMS')
     parser.add_argument('--device', default='0', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--view-img', action='store_true', help='display results')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
     parser.add_argument('--classes', nargs='+', type=int, help='filter by class: --class 0, or --class 0 2 3')
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
-    parser.add_argument('--augment', default=False, help='augmented inference')
+    parser.add_argument('--augment', default=True, help='augmented inference')
+    parser.add_argument('--wbf', default=True, help='use wbf')
     # parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument('--project', default='runs/detect', help='save results to project/name')
-    parser.add_argument('--name', default='5x_e300_832_40_notta_merge', help='save results to project/name')
+    parser.add_argument('--name', default='5x_e150_832_40_wbf', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     print(opt)
