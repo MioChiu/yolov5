@@ -103,7 +103,7 @@ def box_iou(box1, box2):
     return inter / (area1[:, None] + area2 - inter)  # iou = inter / (area1 + area2 - inter)
 
 
-def run_wbf(boxes, scores, labels, image_size, iou_thr=0.3, skip_box_thr=0.01, weights=None):
+def run_wbf(boxes, scores, labels, image_size, iou_thr=0.3, skip_box_thr=0.001, weights=None):
     #boxes = [prediction[image_index]['boxes'].data.cpu().numpy()/(image_size-1) for prediction in predictions]
     #scores = [prediction[image_index]['scores'].data.cpu().numpy() for prediction in predictions]
     # labels = [np.zeros(score.shape[0]) for score in scores]

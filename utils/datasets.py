@@ -125,7 +125,7 @@ def create_test_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augme
         dataloader = loader(dataset,
                             batch_size=batch_size,
                             num_workers=nw,
-                            shuffle=True,
+                            shuffle=False if rect else True,
                             pin_memory=True,
                             collate_fn=LoadWholeImagesAndLabels.collate_fn4 if quad else LoadWholeImagesAndLabels.collate_fn)
     return dataloader, dataset
