@@ -179,12 +179,12 @@ def detect(save_img=False):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/exp_yolov5/yolov5/runs/train/5x_lrf01_box025_e100_832_whole/weights/best.pt', help='model.pt path(s)')
-    parser.add_argument('--source', type=str, default='/mnt/qiuzheng/data/tile/images/test/', help='source')  # file/folder, 0 for webcam
-    parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
-    parser.add_argument('--conf-thres', type=float, default=0.01, help='object confidence threshold')
-    parser.add_argument('--iou-thres', type=float, default=0.1, help='IOU threshold for NMS')
-    parser.add_argument('--device', default='3', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
+    parser.add_argument('--weights', nargs='+', type=str, default='/mnt/qiuzheng/codes/exp_yolov5/yolov5/runs/train/5x_se_lrf04_box025_a4_t5_e150_832/weights/best93.pt', help='model.pt path(s)')
+    parser.add_argument('--source', type=str, default='/mnt/qiuzheng/data/tile_round1_testB_20210128/testB_imgs/', help='source')  # file/folder, 0 for webcam
+    parser.add_argument('--img-size', type=int, default=832, help='inference size (pixels)')
+    parser.add_argument('--conf-thres', type=float, default=0.1, help='object confidence threshold')
+    parser.add_argument('--iou-thres', type=float, default=0.15, help='IOU threshold for NMS')
+    parser.add_argument('--device', default='2', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--view-img', action='store_true', help='display results')
     parser.add_argument('--save-txt', action='store_true', help='save results to *.txt')
     parser.add_argument('--save-conf', action='store_true', help='save confidences in --save-txt labels')
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     # parser.add_argument('--augment', action='store_true', help='augmented inference')
     parser.add_argument('--update', action='store_true', help='update all models')
     parser.add_argument('--project', default='runs/detect', help='save results to project/name')
-    parser.add_argument('--name', default='5x_e100_832_best_wbf', help='save results to project/name')
+    parser.add_argument('--name', default='5x_se_93_testb_1', help='save results to project/name')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     opt = parser.parse_args()
     print(opt)

@@ -100,13 +100,13 @@ class Ensemble(nn.ModuleList):
     def __init__(self):
         super(Ensemble, self).__init__()
 
-    def forward(self, x, augment=False):
+    def forward(self, x, augment=False, wbf=False):
         y = []
         for module in self:
-            y.append(module(x, augment)[0])
+            y.append(module(x, augment, wbf)[0])
         # y = torch.stack(y).max(0)[0]  # max ensemble
         # y = torch.stack(y).mean(0)  # mean ensemble
-        y = torch.cat(y, 1)  # nms ensemble
+        # y = torch.cat(y, 1)  # nms ensemble
         return y, None  # inference, train output
 
 

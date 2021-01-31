@@ -101,8 +101,8 @@ class Model(nn.Module):
     def forward(self, x, augment=False, profile=False, wbf=False):
         if augment:
             img_size = x.shape[-2:]  # height, width
-            s = [1, 1.2, 0.83]  # scales
-            f = [None, 3, 2]  # flips (2-ud, 3-lr)
+            s = [1, 1.2, 0.83, 0.75, 1.15]  # scales
+            f = [None, 3, 2, None, 2]  # flips (2-ud, 3-lr)
             y = []  # outputs
             for si, fi in zip(s, f):
                 xi = scale_img(x.flip(fi) if fi else x, si, gs=int(self.stride.max()))
@@ -204,7 +204,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
     no = na * (nc + 5)  # number of outputs = anchors * (classes + 5)
 
     # import DCN
-    from models.DCNv2.DCN.dcn_v2 import DCN
+    # from models.DCNv2.DCN.dcn_v2 import DCN
 
     layers, save, c2 = [], [], ch[-1]  # layers, savelist, ch out
     for i, (f, n, m, args) in enumerate(d['backbone'] + d['head']):  # from, number, module, args
@@ -216,7 +216,7 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
                 pass
 
         n = max(round(n * gd), 1) if n > 1 else n  # depth gain
-        if m in [Conv, Bottleneck, SPP, DWConv, MixConv2d, Focus, CrossConv, BottleneckCSP, C3, C3SE, DCN]:
+        if m in [Conv, Bottleneck, SPP, DWConv, MixConv2d, Focus, CrossConv, BottleneckCSP, C3, C3SE]:
             c1, c2 = ch[f], args[0]
 
             # Normal

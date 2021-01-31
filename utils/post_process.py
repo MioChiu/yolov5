@@ -112,10 +112,10 @@ def run_wbf(boxes, scores, labels, image_size, iou_thr=0.3, skip_box_thr=0.001, 
     boxes, scores, labels = weighted_boxes_fusion(boxes, scores, labels, weights=None, iou_thr=iou_thr, skip_box_thr=skip_box_thr)
     #boxes, scores, labels = nms(boxes, scores, labels, weights=[1,1,1,1,1], iou_thr=0.5)
     boxes = boxes*(image_size)
-    # mask = scores > 0.05
-    # boxes = boxes[mask]
-    # scores = scores[mask]
-    # labels = labels[mask]
+    mask = scores > 0.0099
+    boxes = boxes[mask]
+    scores = scores[mask]
+    labels = labels[mask]
     scores = scores[:, np.newaxis]
     labels = labels[:, np.newaxis]
     return boxes, scores, labels

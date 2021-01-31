@@ -39,10 +39,10 @@ def check_anchors(dataset, model, thr=4.0, imgsz=640):
 
     bpr, aat = metric(m.anchor_grid.clone().cpu().view(-1, 2))
     print(f'anchors/target = {aat:.2f}, Best Possible Recall (BPR) = {bpr:.4f}', end='')
-    if bpr < 0.98:  # threshold to recompute
+    if bpr < 0.995:  # threshold to recompute
         print('. Attempting to improve anchors, please wait...')
         na = m.anchor_grid.numel() // 2  # number of anchors
-        new_anchors = kmean_anchors(dataset, n=na, img_size=imgsz, thr=thr, gen=1000, verbose=False)
+        new_anchors = kmean_anchors(dataset, n=na, img_size=imgsz, thr=thr, gen=5000, verbose=False)
         new_bpr = metric(new_anchors.reshape(-1, 2))[0]
         if new_bpr > bpr:  # replace anchors
             new_anchors = torch.tensor(new_anchors, device=m.anchors.device).type_as(m.anchors)
@@ -139,7 +139,7 @@ def kmean_anchors(path='./data/coco128.yaml', n=9, img_size=640, thr=4.0, gen=10
     # Evolve
     npr = np.random
     f, sh, mp, s = anchor_fitness(k), k.shape, 0.9, 0.1  # fitness, generations, mutation prob, sigma
-    pbar = tqdm(range(gen), desc=f'{prefix}Evolving anchors with Genetic Algorithm:')  # progress bar
+    pbar = tqdm(range(gen), desc=f'{prefix}Evolving anchors with Genetic Algorithm:', position=0, leave=True, ascii=True)  # progress bar
     for _ in pbar:
         v = np.ones(sh)
         while (v == 1).all():  # mutate until a change occurs (prevent duplicates)

@@ -101,8 +101,8 @@ def compute_loss(p, targets, model):  # predictions, targets, model
     # Focal loss
     g = h['fl_gamma']  # focal loss gamma
     if g > 0:
-        BCEcls, BCEobj = FocalLoss(BCEcls, g), FocalLoss(BCEobj, g)
-
+        BCEcls, BCEobj = QFocalLoss(BCEcls, g), QFocalLoss(BCEobj, g)
+        # BCEobj = QFocalLoss(BCEobj, g)
     # Losses
     nt = 0  # number of targets
     balance = [4.0, 1.0, 0.3, 0.1, 0.03]  # P3-P7
